@@ -25,7 +25,8 @@ JavaScript (ES6) – Quiz logic, timer, and score calculation
 ---
 📸 Screenshots
 
- 
+ ![Quiz Screenshot](https://user-images.githubusercontent.com/your-image-link.png)
+
 ---
 🚀 How to Run
 
