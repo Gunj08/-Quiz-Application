@@ -1,5 +1,7 @@
 # -Quiz-Application
+
 A simple and interactive Quiz Web Application built using HTML, CSS, and JavaScript. This project is part of my Web Development Internship where I learned how to design responsive UI, handle events, and manage timers for quizzes.
+
 ---
 📌 Features
 
@@ -14,6 +16,7 @@ A simple and interactive Quiz Web Application built using HTML, CSS, and JavaScr
 ✅ Responsive design (works on desktop & mobile)
 
 ✅ Start & End screen for better experience
+
 ---
 🛠️ Technologies Used
 
@@ -22,6 +25,7 @@ HTML5 – Structure of the quiz
 CSS3 – Styling and responsive layout
 
 JavaScript (ES6) – Quiz logic, timer, and score calculation
+
 ---
 📸 Screenshots
 
@@ -43,12 +47,15 @@ JavaScript (ES6) – Quiz logic, timer, and score calculation
 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
+
 ---
 
 📧 Contact
 
 👩‍💻 Developed by Gunajn Kumari
+
 🔗 GitHub: Gunj08
+
 📩 Email: gunjankumarikushwaha080@gmail.com
 
 Open the folder and run index.html in your browser.
