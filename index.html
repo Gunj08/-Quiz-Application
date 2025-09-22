@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Quiz App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      background-image: url('images.jpg');
+      background-repeat: no-repeat;
+      background-size: cover;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-attachment: fixed;
+      height: 100vh;
+      overflow: hidden;
+      text-align: center
+    }
+
+    .hidden {
+      display: none
+    }
+
+    .container {
+      width: 90%;
+      max-width: 600px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2)
+    }
+
+    h1,
+    h2 {
+      margin-bottom: 15px
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #ff4b2b;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s
+    }
+
+    button:hover {
+      background: #375443
+    }
+
+    .subjects,
+    .levels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px
+    }
+
+    .card {
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s
+    }
+
+    .card:hover {
+      background: #444
+    }
+
+    .question button {
+      display: block;
+      width: 100%;
+      margin: 8px 0
+    }
+
+    #timer {
+      font-size: 18px;
+      margin-bottom: 10px
+    }
+
+    canvas#fireworks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none
+    }
+
+    input {
+      padding: 10px;
+      width: 80%;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="fireworks"></canvas>
+
+  <div class="container" id="login-screen">
+    <h1>Welcome to Quiz App</h1>
+    <p>Enter your name to continue</p>
+    <input type="text" id="username" placeholder="Your Name">
+    <br>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div class="container hidden" id="subject-screen">
+    <h1>Select Subject</h1>
+    <div class="subjects">
+      <div class="card" onclick="chooseLevel('hindi')">🇮🇳 Hindi</div>
+      <div class="card" onclick="chooseLevel('english')">📘 English</div>
+      <div class="card" onclick="chooseLevel('maths')">🔢 Mathematics</div>
+      <div class="card" onclick="chooseLevel('science')">🔬 Science</div>
+      <div class="card" onclick="chooseLevel('gk')">🌍 General Knowledge</div>
+      <div class="card" onclick="chooseLevel('computer')">💻 Computer</div>
+      <div class="card" onclick="chooseLevel('history')">📚 History</div>
+    </div>
+    <button onclick="goHome()">Exit</button>
+  </div>
+
+  <div class="container hidden" id="level-screen">
+    <h2>Select Level</h2>
+    <div class="levels">
+      <div class="card" onclick="startQuiz(currentSubject,'simple')">🙂 Simple</div>
+      <div class="card" onclick="startQuiz(currentSubject,'intermediate')">😎 Intermediate</div>
+      <div class="card" onclick="startQuiz(currentSubject,'hard')">🔥 Hard</div>
+    </div>
+    <button onclick="goHome()">Back</button>
+  </div>
+
+  <div class="container hidden" id="quiz-screen">
+    <div id="timer">Time: <span id="time">15</span>s</div>
+    <div id="question-box" class="question"></div>
+  </div>
+
+  <div class="container hidden" id="result-screen">
+    <h2>Quiz Completed!</h2>
+    <p id="result-text"></p>
+    <button onclick="restartQuiz()">Restart</button>
+    <button onclick="goHome()">Home</button>
+  </div>
+
+  <script>
+    let currentQuestions = [], currentIndex = 0, score = 0, currentSubject = "", currentLevel = "";
+    let timer, time = 15, timerElement = document.getElementById("time");
+
+    // ✅ Questions Object
+    const questions = {
+      // ----- Hindi -----
+      "hindi-simple": [
+        { q: "भारत का राष्ट्रीय पक्षी कौन सा है?", options: ["मोर", "गौरैया", "कबूतर", "तोता"], answer: 0 },
+        { q: "हिंदी दिवस कब मनाया जाता है?", options: ["14 सितंबर", "15 अगस्त", "26 जनवरी", "2 अक्टूबर"], answer: 0 },
+        { q: "भारत की राजधानी?", options: ["दिल्ली", "मुंबई", "जयपुर", "कोलकाता"], answer: 0 },
+        { q: "राष्ट्रीय फल?", options: ["आम", "सेब", "केला", "अंगूर"], answer: 0 },
+        { q: "गंगा किसकी सहायक नदी है?", options: ["यमुना", "ब्रह्मपुत्र", "सागर", "कोई नहीं"], answer: 3 }
+      ],
+      "hindi-intermediate": [
+        { q: "रामचरितमानस किसके द्वारा लिखा गया?", options: ["तुलसीदास", "कबीर", "सूरदास", "कालिदास"], answer: 0 },
+        { q: "भारत के राष्ट्रपति भवन कहाँ है?", options: ["दिल्ली", "लखनऊ", "जयपुर", "भोपाल"], answer: 0 },
+        { q: "भारत का राष्ट्रीय गीत?", options: ["जन गण मन", "वन्दे मातरम्", "सारे जहाँ से अच्छा", "मेरा भारत महान"], answer: 1 },
+        { q: "सुभाष चंद्र बोस का नारा?", options: ["जय हिंद", "इंकलाब जिंदाबाद", "करो या मरो", "स्वराज मेरा जन्मसिद्ध अधिकार"], answer: 0 },
+        { q: "हिन्दी की पहली फिल्म?", options: ["राजा हरिश्चंद्र", "आलम आरा", "मदर इंडिया", "शोले"], answer: 1 }
+      ],
+      "hindi-hard": [
+        { q: "किस भाषा से हिन्दी पर सबसे अधिक प्रभाव पड़ा?", options: ["फारसी", "संस्कृत", "अंग्रेज़ी", "अरबी"], answer: 1 },
+        { q: "हिन्दी साहित्य के तीन स्तंभ?", options: ["कबीर, तुलसी, सूर", "मीरा, रहीम, रसखान", "प्रेमचंद, निराला, पंत", "सभी"], answer: 0 },
+        { q: "प्रेमचंद की प्रसिद्ध कृति?", options: ["गोदान", "गीतांजलि", "शकुंतला", "रामचरितमानस"], answer: 0 },
+        { q: "भारतेंदु हरिश्चंद्र किस युग से जुड़े?", options: ["रीति", "भक्ति", "आधुनिक", "छायावाद"], answer: 2 },
+        { q: "छायावाद के चार स्तंभ?", options: ["निराला, पंत, प्रसाद, महादेवी", "प्रेमचंद, कबीर, रहीम, तुलसी", "सभी", "कोई नहीं"], answer: 0 }
+      ],
+
+      "english-simple": [
+        { q: "What is the plural of 'Child'?", options: ["Childs", "Children", "Childes", "Childer"], answer: 1 },
+        { q: "Opposite of 'Fast'?", options: ["Slow", "Quick", "Speed", "Run"], answer: 0 },
+        { q: "What is the past tense of 'Go'?", options: ["Goes", "Gone", "Went", "Going"], answer: 2 },
+        { q: "Synonym of 'Happy'?", options: ["Sad", "Joyful", "Angry", "Cry"], answer: 1 },
+        { q: "Which is a vowel?", options: ["B", "C", "E", "Z"], answer: 2 }
+      ],
+      "english-intermediate": [
+        { q: "Who wrote 'Romeo and Juliet'?", options: ["Charles Dickens", "William Shakespeare", "Mark Twain", "Jane Austen"], answer: 1 },
+        { q: "Which is a pronoun?", options: ["He", "Book", "Run", "Chair"], answer: 0 },
+        { q: "Past participle of 'Write'?", options: ["Writed", "Written", "Wrote", "Writes"], answer: 1 },
+        { q: "What is the antonym of 'Brave'?", options: ["Courageous", "Cowardly", "Fearless", "Hero"], answer: 1 },
+        { q: "Choose the correct spelling:", options: ["Definately", "Definitely", "Defanitely", "Definetely"], answer: 1 }
+      ],
+      "english-hard": [
+        { q: "Meaning of 'Euphemism'?", options: ["Harsh word", "Mild expression", "Opposite meaning", "Strong criticism"], answer: 1 },
+        { q: "Identify the figure of speech: 'He is as brave as a lion.'", options: ["Metaphor", "Simile", "Personification", "Irony"], answer: 1 },
+        { q: "Who wrote 'Paradise Lost'?", options: ["John Milton", "Chaucer", "Tennyson", "Shelley"], answer: 0 },
+        { q: "Synonym of 'Ambiguous'?", options: ["Clear", "Confusing", "Simple", "Obvious"], answer: 1 },
+        { q: "Which is the correct passive voice: 'They are writing a letter'?", options: ["A letter is written", "A letter is being written", "A letter has been written", "A letter was written"], answer: 1 }
+      ],
+
+      // ✅ Mathematics
+      "maths-simple": [
+        { q: "5 + 3 = ?", options: ["6", "7", "8", "9"], answer: 2 },
+        { q: "10 - 6 = ?", options: ["2", "3", "4", "5"], answer: 2 },
+        { q: "2 × 4 = ?", options: ["6", "7", "8", "9"], answer: 2 },
+        { q: "12 ÷ 3 = ?", options: ["2", "3", "4", "5"], answer: 2 },
+        { q: "Square of 5?", options: ["10", "15", "20", "25"], answer: 3 }
+      ],
+      "maths-intermediate": [
+        { q: "Simplify: 15 ÷ (3×1)", options: ["3", "4", "5", "6"], answer: 2 },
+        { q: "HCF of 12 and 18?", options: ["2", "3", "6", "12"], answer: 2 },
+        { q: "LCM of 4 and 5?", options: ["10", "15", "20", "25"], answer: 2 },
+        { q: "Solve: (25 – 10) ÷ 3", options: ["3", "5", "15", "30"], answer: 0 },
+        { q: "What is 7²?", options: ["42", "47", "49", "56"], answer: 2 }
+      ],
+      "maths-hard": [
+        { q: "Derivative of x²?", options: ["2x", "x", "x²", "None"], answer: 0 },
+        { q: "Integral of 2x?", options: ["x²", "2x²", "x² + C", "2x + C"], answer: 2 },
+        { q: "Solve: sin²θ + cos²θ = ?", options: ["0", "1", "2", "Undefined"], answer: 1 },
+        { q: "Log(1) = ?", options: ["0", "1", "10", "∞"], answer: 0 },
+        { q: "Value of π (approx)?", options: ["2.12", "3.14", "3.41", "4.13"], answer: 1 }
+      ],
+
+      // ✅ Science
+      "science-simple": [
+        { q: "H₂O is?", options: ["Oxygen", "Water", "Hydrogen", "Carbon"], answer: 1 },
+        { q: "Earth revolves around?", options: ["Moon", "Sun", "Mars", "Venus"], answer: 1 },
+        { q: "The red planet is?", options: ["Mars", "Jupiter", "Saturn", "Venus"], answer: 0 },
+        { q: "Plants prepare food by?", options: ["Respiration", "Photosynthesis", "Digestion", "Transpiration"], answer: 1 },
+        { q: "Human heart has how many chambers?", options: ["2", "3", "4", "5"], answer: 2 }
+      ],
+      "science-intermediate": [
+        { q: "Symbol of Sodium?", options: ["So", "S", "Na", "Sn"], answer: 2 },
+        { q: "Unit of Force?", options: ["Joule", "Newton", "Pascal", "Watt"], answer: 1 },
+        { q: "Who discovered Gravity?", options: ["Einstein", "Newton", "Galileo", "Faraday"], answer: 1 },
+        { q: "What is DNA?", options: ["Protein", "Carbohydrate", "Nucleic acid", "Lipid"], answer: 2 },
+        { q: "Atomic number of Oxygen?", options: ["6", "8", "10", "12"], answer: 1 }
+      ],
+      "science-hard": [
+        { q: "Speed of light is?", options: ["3×10⁵ km/s", "3×10⁸ m/s", "3×10³ m/s", "3×10⁶ km/s"], answer: 1 },
+        { q: "pH of pure water?", options: ["5", "6", "7", "8"], answer: 2 },
+        { q: "First Law of Thermodynamics?", options: ["Energy can’t be created/destroyed", "Force = mass × acceleration", "For every action, equal reaction", "Entropy always increases"], answer: 0 },
+        { q: "Which vitamin is fat soluble?", options: ["B", "C", "D", "None"], answer: 2 },
+        { q: "SI unit of Power?", options: ["Watt", "Newton", "Joule", "Ampere"], answer: 0 }
+      ],
+
+      // ✅ General Knowledge
+      "gk-simple": [
+        { q: "National animal of India?", options: ["Lion", "Tiger", "Elephant", "Leopard"], answer: 1 },
+        { q: "Capital of India?", options: ["Delhi", "Mumbai", "Kolkata", "Chennai"], answer: 0 },
+        { q: "Currency of USA?", options: ["Euro", "Dollar", "Pound", "Yen"], answer: 1 },
+        { q: "Who is called Father of Nation (India)?", options: ["Nehru", "Gandhi", "Patel", "Bose"], answer: 1 },
+        { q: "Which is the smallest continent?", options: ["Asia", "Europe", "Australia", "Africa"], answer: 2 }
+      ],
+      "gk-intermediate": [
+        { q: "First President of India?", options: ["Nehru", "Rajendra Prasad", "Patel", "Dr. Kalam"], answer: 1 },
+        { q: "Olympics held every ___ years?", options: ["2", "3", "4", "5"], answer: 2 },
+        { q: "Where is Taj Mahal?", options: ["Delhi", "Agra", "Jaipur", "Lucknow"], answer: 1 },
+        { q: "UN Headquarters is in?", options: ["Paris", "New York", "Geneva", "London"], answer: 1 },
+        { q: "Largest ocean?", options: ["Atlantic", "Indian", "Pacific", "Arctic"], answer: 2 }
+      ],
+      "gk-hard": [
+        { q: "Who wrote 'Arthashastra'?", options: ["Chanakya", "Kalidas", "Valmiki", "Kabir"], answer: 0 },
+        { q: "Nobel Prize is awarded in?", options: ["London", "Paris", "Stockholm", "Berlin"], answer: 2 },
+        { q: "GDP stands for?", options: ["Gross Domestic Product", "General Data Policy", "Global Development Plan", "Gross Data Production"], answer: 0 },
+        { q: "Who was first woman Prime Minister of India?", options: ["Sonia Gandhi", "Indira Gandhi", "Sarojini Naidu", "Pratibha Patil"], answer: 1 },
+        { q: "Where is Mount Everest?", options: ["India", "China", "Nepal", "Bhutan"], answer: 2 }
+      ],
+
+      // ✅ Computer
+      "computer-simple": [
+        { q: "CPU is?", options: ["Central Processing Unit", "Computer Personal Unit", "Central Program Utility", "Control Power Unit"], answer: 0 },
+        { q: "Shortcut for Copy?", options: ["Ctrl+V", "Ctrl+C", "Ctrl+X", "Ctrl+Z"], answer: 1 },
+        { q: "Binary digits are?", options: ["1,2", "0,1", "A,B", "Yes,No"], answer: 1 },
+        { q: "Microsoft Word is a?", options: ["OS", "Software", "Hardware", "Database"], answer: 1 },
+        { q: "1 KB = ?", options: ["1000 bytes", "1024 bytes", "512 bytes", "2048 bytes"], answer: 1 }
+      ],
+      "computer-intermediate": [
+        { q: "HTML stands for?", options: ["Hyper Text Markup Language", "High Text Machine Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"], answer: 0 },
+        { q: "Which is not a programming language?", options: ["Python", "Java", "Linux", "C++"], answer: 2 },
+        { q: "IP address format?", options: ["IPv2", "IPv4", "IPv6", "Both 2 & 3"], answer: 3 },
+        { q: "SQL is used for?", options: ["Networking", "Database", "Games", "Hardware"], answer: 1 },
+        { q: "First computer virus?", options: ["Creeper", "ILOVEYOU", "Trojan", "Worm"], answer: 0 }
+      ],
+      "computer-hard": [
+        { q: "Founder of WWW?", options: ["Bill Gates", "Tim Berners-Lee", "Steve Jobs", "Linus Torvalds"], answer: 1 },
+        { q: "Python is ___ typed language?", options: ["Statically", "Dynamically", "Both", "None"], answer: 1 },
+        { q: "What is Big O notation?", options: ["Algorithm efficiency", "Operating system", "Sorting method", "Data type"], answer: 0 },
+        { q: "Blockchain is based on?", options: ["Centralized DB", "Distributed ledger", "Excel Sheets", "AI"], answer: 1 },
+        { q: "AI stands for?", options: ["Automatic Input", "Artificial Intelligence", "Advanced Internet", "Active Interface"], answer: 1 }
+      ],
+
+      // ✅ History
+      "history-simple": [
+        { q: "Who was first Mughal Emperor?", options: ["Akbar", "Babur", "Shah Jahan", "Aurangzeb"], answer: 1 },
+        { q: "Who discovered America?", options: ["Columbus", "Newton", "Da Vinci", "Edison"], answer: 0 },
+        { q: "Who was first President of USA?", options: ["Lincoln", "George Washington", "Jefferson", "Kennedy"], answer: 1 },
+        { q: "Which war ended in 1945?", options: ["WWI", "WWII", "Cold War", "Civil War"], answer: 1 },
+        { q: "Who built Red Fort?", options: ["Akbar", "Shah Jahan", "Aurangzeb", "Humayun"], answer: 1 }
+      ],
+      "history-intermediate": [
+        { q: "Who was first female ruler of Delhi?", options: ["Razia Sultan", "Jhansi Rani", "Indira Gandhi", "Nur Jahan"], answer: 0 },
+        { q: "Battle of Plassey year?", options: ["1757", "1857", "1947", "1707"], answer: 0 },
+        { q: "Who started Non-Cooperation Movement?", options: ["Nehru", "Patel", "Gandhi", "Bose"], answer: 2 },
+        { q: "Who was known as Iron Man of India?", options: ["Bose", "Patel", "Tilak", "Gokhale"], answer: 1 },
+        { q: "French Revolution year?", options: ["1776", "1789", "1800", "1815"], answer: 1 }
+      ],
+      "history-hard": [
+        { q: "Who was last Governor General of India?", options: ["Mountbatten", "Canning", "Dalhousie", "Curzon"], answer: 0 },
+        { q: "Magna Carta signed in?", options: ["1215", "1315", "1415", "1515"], answer: 0 },
+        { q: "Who wrote 'The Prince'?", options: ["Machiavelli", "Plato", "Aristotle", "Socrates"], answer: 0 },
+        { q: "World War I began in?", options: ["1912", "1914", "1916", "1918"], answer: 1 },
+        { q: "Harappan Civilization was also called?", options: ["Indus Valley", "Mesopotamian", "Egyptian", "Chinese"], answer: 0 }
+      ]
+
+    };
+
+    // ✅ Functions
+    function login() {
+      let name = document.getElementById("username").value.trim();
+      if (!name) { alert("Please enter your name"); return; }
+      document.getElementById("login-screen").classList.add("hidden");
+      document.getElementById("subject-screen").classList.remove("hidden");
+    }
+
+    function chooseLevel(subject) {
+      currentSubject = subject;
+      document.getElementById("subject-screen").classList.add("hidden");
+      document.getElementById("level-screen").classList.remove("hidden");
+    }
+
+    function startQuiz(subject, level) {
+      currentSubject = subject;
+      currentLevel = level;
+      currentQuestions = questions[subject + "-" + level];
+
+      if (!currentQuestions || currentQuestions.length === 0) {
+        alert("No questions found for " + subject + " (" + level + ")");
+        return;
+      }
+
+      // 👇 पूरे quiz का समय तय करो (example: simple=60, intermediate=45, hard=30)
+      if (level === "simple") time = 60;
+      else if (level === "intermediate") time = 45;
+      else if (level === "hard") time = 30;
+
+      currentIndex = 0;
+      score = 0;
+
+      document.getElementById("subject-screen").classList.add("hidden");
+      document.getElementById("level-screen").classList.add("hidden");
+      document.getElementById("quiz-screen").classList.remove("hidden");
+
+      showQuestion();
+      startTimer(); // अब पूरा quiz एक ही बार start होगा
+    }
+
+
+    function showQuestion() {
+      let questionBox = document.getElementById("question-box");
+      let q = currentQuestions[currentIndex];
+
+      if (!q) {
+        endQuiz(); // सारे सवाल खत्म → quiz खत्म
+        return;
+      }
+
+      questionBox.innerHTML = `
+    <h2>${q.q}</h2>
+    <div>
+      ${q.options.map((opt, i) =>
+        `<button onclick="checkAnswer(${i})">${opt}</button>`
+      ).join("")}
+    </div>
+  `;
+    }
+
+    function checkAnswer(i) {
+      if (i === currentQuestions[currentIndex].answer) score++;
+      currentIndex++;
+      if (currentIndex < currentQuestions.length) showQuestion(); else endQuiz();
+    }
+
+    function startTimer() {
+      clearInterval(timer);
+      let display = document.getElementById("time");
+      display.innerText = time;
+
+      timer = setInterval(() => {
+        time--;
+        display.innerText = time;
+
+        if (time <= 0) {
+          clearInterval(timer);
+          endQuiz(); // ⏳ टाइम खत्म → Quiz बंद
+        }
+      }, 1000);
+    }
+
+    function endQuiz() {
+      clearInterval(timer);
+      document.getElementById("quiz-screen").classList.add("hidden");
+      document.getElementById("result-screen").classList.remove("hidden");
+      document.getElementById("result-text").innerText = `You scored ${score}/${currentQuestions.length} in ${currentSubject.toUpperCase()} (${currentLevel})`;
+      startFireworks();
+    }
+
+    function restartQuiz() {
+      document.getElementById("result-screen").classList.add("hidden");
+      document.getElementById("subject-screen").classList.remove("hidden");
+    }
+
+    function goHome() {
+      document.querySelectorAll(".container").forEach(c => c.classList.add("hidden"));
+      document.getElementById("login-screen").classList.remove("hidden");
+    }
+
+    // ✅ Fireworks
+    const canvas = document.getElementById("fireworks"), ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    let particles = [];
+    function createFirework(x, y, color) {
+      for (let i = 0; i < 50; i++) {
+        particles.push({ x, y, angle: Math.random() * 2 * Math.PI, speed: Math.random() * 5 + 2, radius: Math.random() * 2 + 2, life: 100, color });
+      }
+    }
+    function updateFireworks() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, i) => {
+        p.x += Math.cos(p.angle) * p.speed; p.y += Math.sin(p.angle) * p.speed; p.life--; p.speed *= 0.98;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI);
+        ctx.fillStyle = p.color; ctx.fill(); if (p.life <= 0) particles.splice(i, 1);
+      });
+      requestAnimationFrame(updateFireworks);
+    }
+    function startFireworks() {
+      let colors = ["#ff4b2b", "#ff416c", "#00ff99", "#00ccff", "#ffff00"];
+      let interval = setInterval(() => { createFirework(Math.random() * canvas.width, Math.random() * canvas.height, colors[Math.floor(Math.random() * colors.length)]) }, 500);
+      setTimeout(() => clearInterval(interval), 4000);
+    }
+    updateFireworks();
+  </script>
+</body>
+
+</html>
