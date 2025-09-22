@@ -26,7 +26,8 @@ JavaScript (ES6) – Quiz logic, timer, and score calculation
 📸 Screenshots
 
  ![Quiz Screenshot](https://github.com/Gunj08/-Quiz-Application/blob/main/Screenshot%202025-09-22%20102823.png?raw=true)
- ![Quiz Screenshot](https://github.com/Gunj08/-Quiz-Application/blob/main/Screenshot%202025-09-22%20102823.png?raw=true)
+ ![Quiz Screenshot](https://github.com/Gunj08/-Quiz-Application/blob/main/Screenshot%202025-09-22%20102909.png?raw=true)
+ ![Quiz Screenshot](https://github.com/Gunj08/-Quiz-Application/blob/main/Screenshot%202025-09-22%20102909.png?raw=true)
 
 ---
 🚀 How to Run
