@@ -58,4 +58,3 @@ Contributions, issues, and feature requests are welcome!
 
 📩 Email: gunjankumarikushwaha080@gmail.com
 
-Open the folder and run index.html in your browser.
